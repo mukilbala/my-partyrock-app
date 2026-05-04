@@ -40,7 +40,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: weekend-getaway-widget6
-      CodeUri: backend/widget6/
+      CodeUri: ../backend/widget6/
       Handler: run.sh
       Role: !GetAtt AppBedrockRole.Arn
       Layers:
@@ -54,7 +54,7 @@ Resources:
         AuthType: NONE
         InvokeMode: RESPONSE_STREAM
     Metadata:
-      SkipBuild: true
+      BuildMethod: makefile
 
   FrontendBucket:
     Type: AWS::S3::Bucket
