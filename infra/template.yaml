@@ -53,6 +53,8 @@ Resources:
       FunctionUrlConfig:
         AuthType: NONE
         InvokeMode: RESPONSE_STREAM
+    Metadata:
+      SkipBuild: true
 
   FrontendBucket:
     Type: AWS::S3::Bucket
