@@ -1,0 +1,81 @@
+name: Deploy Weekend Getaway Trip Planner
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up AWS SAM
+        uses: aws-actions/setup-sam@v2
+
+      - name: SAM Build
+        run: sam build --template infra/template.yaml
+
+      - name: SAM Deploy
+        run: |
+          sam deploy \
+            --stack-name weekend-getaway-trip-planner \
+            --s3-bucket ${{ secrets.SAM_DEPLOY_BUCKET }} \
+            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
+            --region us-east-1 \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset
+
+      - name: Inject Lambda URLs into frontend
+        run: |
+          get_output() {
+            aws cloudformation describe-stacks \
+              --stack-name weekend-getaway-trip-planner \
+              --query "Stacks[0].Outputs[?OutputKey=='$1'].OutputValue" \
+              --output text
+          }
+
+          WIDGET6_URL=$(get_output Widget6Url)
+          echo "Widget6 URL: $WIDGET6_URL"
+
+          sed -i "s|__URL_WIDGET_6__|${WIDGET6_URL}|g" frontend/index.html
+
+      - name: Get bucket name
+        id: bucket
+        run: |
+          BUCKET=$(aws cloudformation describe-stacks \
+            --stack-name weekend-getaway-trip-planner \
+            --query "Stacks[0].Outputs[?OutputKey=='BucketName'].OutputValue" \
+            --output text)
+          echo "name=$BUCKET" >> $GITHUB_OUTPUT
+
+      - name: Sync frontend to S3
+        run: |
+          aws s3 sync frontend/ s3://${{ steps.bucket.outputs.name }}/ \
+            --cache-control no-cache \
+            --delete
+
+      - name: Print website URL
+        run: |
+          WEBSITE=$(aws cloudformation describe-stacks \
+            --stack-name weekend-getaway-trip-planner \
+            --query "Stacks[0].Outputs[?OutputKey=='WebsiteUrl'].OutputValue" \
+            --output text)
+          echo "========================================"
+          echo "App live at: $WEBSITE"
+          echo "========================================"
