@@ -29,7 +29,10 @@ jobs:
         uses: aws-actions/setup-sam@v3
 
       - name: SAM Build
-        run: sam build --template infra/template.yaml --base-dir .
+        run: sam build --template template.yaml
+
+      - name: Copy run.sh into build artifact
+        run: cp backend/widget6/run.sh .aws-sam/build/Widget6Function/
 
       - name: SAM Deploy
         run: |
