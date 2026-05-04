@@ -54,7 +54,7 @@ Resources:
         AuthType: NONE
         InvokeMode: RESPONSE_STREAM
     Metadata:
-      BuildMethod: makefile
+      BuildMethod: python3.12
 
   FrontendBucket:
     Type: AWS::S3::Bucket
