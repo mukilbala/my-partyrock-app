@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weekend Getaway Trip Planner</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #2563eb; --accent: #f59e0b;
+      --bg: #f0f4ff; --card: #ffffff; --text: #1e293b;
+      --muted: #64748b; --border: #e2e8f0; --radius: 12px;
+      --shadow: 0 4px 24px rgba(37,99,235,0.08);
+    }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    header {
+      background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #0ea5e9 100%);
+      color: #fff; padding: 2.5rem 1.5rem 2rem; text-align: center; position: relative; overflow: hidden;
+    }
+    header .emoji { font-size: 3rem; display: block; margin-bottom: 0.5rem; position: relative; }
+    header h1 { font-size: clamp(1.6rem,4vw,2.4rem); font-weight: 800; position: relative; }
+    header p { margin-top: 0.5rem; opacity: 0.85; font-size: 1rem; max-width: 560px; margin-inline: auto; position: relative; }
+    main { max-width: 860px; margin: 2rem auto; padding: 0 1rem 3rem; display: flex; flex-direction: column; gap: 1.25rem; }
+    .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.5rem; border: 1px solid var(--border); }
+    .card-label { display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--primary); margin-bottom: 0.6rem; }
+    .card-label .badge { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 999px; padding: 0.1rem 0.55rem; font-size: 0.7rem; }
+    .card h2 { font-size: 1.05rem; font-weight: 600; margin-bottom: 0.35rem; }
+    .card p.desc { font-size: 0.88rem; color: var(--muted); line-height: 1.5; }
+    input[type="text"], input[type="number"], textarea {
+      width: 100%; padding: 0.65rem 0.9rem; border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: 0.95rem; font-family: inherit; color: var(--text); background: #f8fafc;
+      transition: border-color 0.2s, box-shadow 0.2s; outline: none;
+    }
+    input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.12); background: #fff; }
+    textarea { resize: vertical; min-height: 80px; }
+    .run-btn {
+      display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+      width: 100%; padding: 0.9rem 1.5rem;
+      background: linear-gradient(135deg, var(--primary) 0%, #0ea5e9 100%);
+      color: #fff; border: none; border-radius: var(--radius); font-size: 1.05rem; font-weight: 700;
+      cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 16px rgba(37,99,235,0.3);
+    }
+    .run-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(37,99,235,0.4); }
+    .run-btn:active { transform: translateY(0); }
+    .run-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .output-panel {
+      height: 340px; overflow-y: auto; background: #f8fafc; border: 1.5px solid var(--border);
+      border-radius: 8px; padding: 1rem 1.1rem; font-size: 0.92rem; line-height: 1.7;
+    }
+    .output-panel::-webkit-scrollbar { width: 5px; }
+    .output-panel::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+    .spinner-wrap { display: flex; align-items: center; gap: 0.6rem; color: var(--muted); font-size: 0.88rem; padding: 0.5rem 0; }
+    .spinner { width: 18px; height: 18px; border: 2.5px solid #e2e8f0; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error-msg { color: #dc2626; background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 0.6rem 0.9rem; font-size: 0.88rem; }
+    .md-line { display: block; animation: fadeIn 0.18s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; } }
+    .md-line.h1 { font-size: 1.3rem; font-weight: 800; color: var(--primary); margin: 0.8rem 0 0.3rem; }
+    .md-line.h2 { font-size: 1.1rem; font-weight: 700; color: #1e40af; margin: 0.7rem 0 0.25rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.2rem; }
+    .md-line.h3 { font-size: 1rem; font-weight: 700; color: #1d4ed8; margin: 0.5rem 0 0.2rem; }
+    .md-line.hr { border: none; border-top: 1.5px solid #e2e8f0; margin: 0.6rem 0; display: block; }
+    .md-line.bullet { padding-left: 1.2rem; position: relative; }
+    .md-line.bullet::before { content: "•"; position: absolute; left: 0.3rem; color: var(--accent); font-weight: 700; }
+    .md-line.numbered { padding-left: 1.5rem; }
+    .md-line.empty { height: 0.5rem; }
+    .cursor { display: inline-block; width: 2px; height: 1em; background: var(--primary); animation: blink 0.8s step-end infinite; vertical-align: text-bottom; margin-left: 1px; }
+    @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+    .placeholder-text { color: var(--muted); font-style: italic; font-size: 0.88rem; display: flex; align-items: center; justify-content: center; height: 100%; text-align: center; gap: 0.4rem; }
+    @media (max-width: 600px) { main { padding: 0 0.75rem 2rem; } .card { padding: 1.1rem; } }
+  </style>
+</head>
+<body>
+<header>
+  <span class="emoji">✈️</span>
+  <h1>Weekend Getaway Trip Planner</h1>
+  <p>Plan your perfect weekend getaway! Fill in your details below and get a personalised itinerary instantly.</p>
+</header>
+<main>
+
+  <!-- Widget 1: Welcome -->
+  <div class="card">
+    <div class="card-label"><span>Widget 1</span><span class="badge">User Input</span></div>
+    <h2>👋 Welcome — Your Name</h2>
+    <p class="desc">Tell us your name so we can personalise your trip plan.</p>
+    <input type="text" id="w1-name" placeholder="e.g. Alex" style="margin-top:0.75rem;" />
+  </div>
+
+  <!-- Widget 2: Destination -->
+  <div class="card">
+    <div class="card-label"><span>Widget 2</span><span class="badge">User Input</span></div>
+    <h2>📍 Destination</h2>
+    <p class="desc">Where are you heading? City, region, or country.</p>
+    <input type="text" id="w2-destination" placeholder="e.g. Kyoto, Japan" style="margin-top:0.75rem;" />
+  </div>
+
+  <!-- Widget 3: Travel Dates -->
+  <div class="card">
+    <div class="card-label"><span>Widget 3</span><span class="badge">User Input</span></div>
+    <h2>📅 Travel Dates</h2>
+    <p class="desc">When are you travelling? Include the weekend dates.</p>
+    <input type="text" id="w3-dates" placeholder="e.g. 14-15 June 2025" style="margin-top:0.75rem;" />
+  </div>
+
+  <!-- Widget 4: Budget -->
+  <div class="card">
+    <div class="card-label"><span>Widget 4</span><span class="badge">User Input</span></div>
+    <h2>💰 Budget</h2>
+    <p class="desc">What is your total budget for the trip?</p>
+    <input type="text" id="w4-budget" placeholder="e.g. $500 USD per person" style="margin-top:0.75rem;" />
+  </div>
+
+  <!-- Widget 5: Interests + Group Size -->
+  <div class="card">
+    <div class="card-label"><span>Widget 5</span><span class="badge">User Input</span></div>
+    <h2>🎯 Interests &amp; Group Size</h2>
+    <p class="desc">What do you enjoy? How many people are travelling?</p>
+    <textarea id="w5-interests" placeholder="e.g. food, hiking, museums, nightlife, photography" style="margin-top:0.75rem;"></textarea>
+    <input type="number" id="w5-people" placeholder="Number of people (e.g. 2)" min="1" max="50" style="margin-top:0.75rem;" />
+  </div>
+
+  <!-- Run All Button -->
+  <button class="run-btn" id="run-btn" onclick="runAll()">
+    <span id="run-icon">🚀</span>
+    <span id="run-label">Generate Weekend Itinerary</span>
+  </button>
+
+  <!-- Widget 6: AI Output -->
+  <div class="card">
+    <div class="card-label"><span>Widget 6</span><span class="badge">AI — Text Generation</span></div>
+    <h2>🗺️ Your Personalised Weekend Itinerary</h2>
+    <p class="desc" style="margin-bottom:0.75rem;">Your day-by-day itinerary will appear here once you click Generate.</p>
+    <div class="output-panel" id="w6-output">
+      <div class="placeholder-text" id="w6-placeholder">
+        🌍 Fill in your details above and click <strong style="margin-left:4px;">Generate Weekend Itinerary</strong>
+      </div>
+    </div>
+  </div>
+
+</main>
+<script>
+  const STREAM_URLS = {
+    widget_6: '__URL_WIDGET_6__',
+  };
+
+  function renderMdLine(text) {
+    const span = document.createElement('span');
+    span.className = 'md-line';
+    if (/^---+$/.test(text.trim())) { span.className += ' hr'; return span; }
+    if (!text.trim()) { span.className += ' empty'; return span; }
+    let raw = text, extra = '';
+    if (/^### /.test(raw))       { raw = raw.replace(/^### /,''); extra = 'h3'; }
+    else if (/^## /.test(raw))   { raw = raw.replace(/^## /,'');  extra = 'h2'; }
+    else if (/^# /.test(raw))    { raw = raw.replace(/^# /,'');   extra = 'h1'; }
+    else if (/^[-*] /.test(raw)) { raw = raw.replace(/^[-*] /,''); extra = 'bullet'; }
+    else if (/^\d+\. /.test(raw)){ extra = 'numbered'; }
+    if (extra) span.className += ' ' + extra;
+    raw = raw
+      .replace(/`([^`]+)`/g, '<code style="background:#f1f5f9;padding:0.1em 0.35em;border-radius:4px;font-size:0.88em;">$1</code>')
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    span.innerHTML = raw;
+    return span;
+  }
+
+  async function streamWidget(url, body, outputEl) {
+    outputEl.innerHTML = '';
+    const spinWrap = document.createElement('div');
+    spinWrap.className = 'spinner-wrap';
+    spinWrap.innerHTML = '<div class="spinner"></div><span>Generating your itinerary...</span>';
+    outputEl.appendChild(spinWrap);
+    const cursor = document.createElement('span');
+    cursor.className = 'cursor';
+    let lineBuffer = '', currentLineEl = null;
+    function flushLine(line) {
+      if (currentLineEl && cursor.parentNode === currentLineEl) currentLineEl.removeChild(cursor);
+      const el = renderMdLine(line);
+      outputEl.appendChild(el);
+      currentLineEl = el;
+      el.appendChild(cursor);
+      outputEl.scrollTop = outputEl.scrollHeight;
+    }
+    try {
+      const resp = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      if (!resp.ok) { const t = await resp.text(); throw new Error('HTTP ' + resp.status + ': ' + t); }
+      spinWrap.remove();
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        lineBuffer += decoder.decode(value, { stream: true });
+        const parts = lineBuffer.split('\n');
+        lineBuffer = parts.pop();
+        for (const line of parts) flushLine(line);
+      }
+      if (lineBuffer) flushLine(lineBuffer);
+      if (cursor.parentNode) cursor.parentNode.removeChild(cursor);
+    } catch (err) {
+      spinWrap.remove();
+      outputEl.innerHTML = '';
+      const e = document.createElement('div');
+      e.className = 'error-msg';
+      e.textContent = 'Error: ' + err.message;
+      outputEl.appendChild(e);
+    }
+  }
+
+  async function runAll() {
+    const name        = document.getElementById('w1-name').value.trim();
+    const destination = document.getElementById('w2-destination').value.trim();
+    const dates       = document.getElementById('w3-dates').value.trim();
+    const budget      = document.getElementById('w4-budget').value.trim();
+    const interests   = document.getElementById('w5-interests').value.trim();
+    const people      = document.getElementById('w5-people').value.trim();
+    if (!destination) { alert('Please enter a destination.'); return; }
+    if (!dates)       { alert('Please enter your travel dates.'); return; }
+    if (!budget)      { alert('Please enter your budget.'); return; }
+    const ph = document.getElementById('w6-placeholder');
+    if (ph) ph.remove();
+    const btn = document.getElementById('run-btn');
+    btn.disabled = true;
+    document.getElementById('run-icon').textContent = '⏳';
+    document.getElementById('run-label').textContent = 'Generating...';
+    const prompt = `You are an enthusiastic and knowledgeable travel planner. Create a detailed, fun, and realistic day-by-day weekend itinerary for a trip to ${destination} for ${people||'2'} people traveling on ${dates} with a budget of ${budget}. Their interests include: ${interests||'general sightseeing'}.
+
+Structure the itinerary with a clear section for each day (Saturday and Sunday). For each day, include specific recommendations for:
+- Morning activity
+- Breakfast spot or suggestion
+- Midday activity
+- Lunch spot or suggestion
+- Afternoon activity
+- Dinner spot or suggestion
+- Evening activity or nightlife (if applicable)
+
+Include estimated costs where relevant, practical tips, and local gems. Keep the tone warm, friendly, and exciting. Make sure all suggestions are realistic for the budget and group size.${name ? '\n\nAddress the traveller as '+name+'.' : ''}`;
+    try {
+      await streamWidget(STREAM_URLS.widget_6, { prompt }, document.getElementById('w6-output'));
+    } finally {
+      btn.disabled = false;
+      document.getElementById('run-icon').textContent = '🚀';
+      document.getElementById('run-label').textContent = 'Generate Weekend Itinerary';
+    }
+  }
+</script>
+</body>
+</html>
